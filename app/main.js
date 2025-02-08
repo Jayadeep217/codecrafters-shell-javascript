@@ -7,11 +7,14 @@ const rl = readline.createInterface({
 });
 
 function prompt() {
-  rl.question("$ ", (answer) => {
-    if (answer === "exit 0") {
+  rl.question("$ ", (input) => {
+    let command = input.split(" ")[0];
+    if (input === "exit 0") {
       exit(0);
+    } else if (command === "echo") {
+      console.log(`${input.replace("echo", "").trim()}`);
     } else {
-      console.log(`${answer}: command not found`);
+      console.log(`${input}: command not found`);
     }
     prompt();
   });
