@@ -1,5 +1,7 @@
 const readline = require("readline");
 const { exit } = require("process");
+const fs = require("fs");
+const path = require("path");
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -8,25 +10,40 @@ const rl = readline.createInterface({
 
 function prompt() {
   rl.question("$ ", (input) => {
-    const builtins = ["echo", "exit", "type"];
-    let input_arr = input.split(" ");
-    let primary_command = input_arr[0];
-    if (input === "exit 0") {
-      exit(0);
-    } else if (primary_command === "type") {
-      let cmd = input_arr[1].trim();
-      if (builtins.includes(cmd)) {
+    const builtins = new Set(["echo", "exit", "type"]);
+    const args = input.trim().split(/\s+/);
+    const command = args[0];
+    const restOfInput = args.slice(1).join(" ");
+
+    if (command === "exit") {
+      const exitCode = parseInt(args[1]);
+      exit(exitCode);
+    } else if (command === "type") {
+      let found = false;
+      const cmd = args[1];
+      if (builtins.has(cmd)) {
         console.log(`${cmd} is a shell builtin`);
+        found = true;
       } else {
-        console.log(`${cmd}: not found`);
+        const paths = process.env.PATH.split(path.delimiter);
+        for (const pathEnv of paths) {
+          let destPath = path.join(pathEnv, cmd);
+          if (fs.existsSync(destPath) && fs.statSync(destPath).isFile()) {
+            console.log(`${command} is ${destPath}\n`);
+            found = true;
+          }
+        }
+        if (!found) {
+          console.log(`${restOfInput}: not found`);
+        }
       }
-    } else if (primary_command === "echo") {
-      console.log(`${input.replace("echo", "").trim()}`);
+    } else if (command === "echo") {
+      console.log(restOfInput);
     } else {
-      console.log(`${input}: command not found`);
+      console.log(`${command}: command not found`);
     }
+
     prompt();
   });
 }
-
 prompt();
