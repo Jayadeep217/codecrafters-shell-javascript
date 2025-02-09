@@ -29,7 +29,7 @@ function prompt() {
         for (const pathEnv of paths) {
           let destPath = path.join(pathEnv, cmd);
           if (fs.existsSync(destPath) && fs.statSync(destPath).isFile()) {
-            console.log(`${command} is ${destPath}\n`);
+            console.log(`${cmd} is ${destPath}\n`);
             found = true;
           }
         }
