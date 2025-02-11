@@ -8,13 +8,17 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-function exit_(exitCode) {
+function terminateShell(exitCode) {
   if (exitCode !== 0) {
     console.error("Invalid exit code");
     return;
   }
   rl.close();
   process.exit(exitCode || 0);
+}
+
+function printWorkDir() {
+  return process.cwd();
 }
 
 function findExternalProgram(command) {
@@ -39,14 +43,14 @@ function findExternalProgram(command) {
 }
 
 function handleType(args) {
-  const builtins = new Set(["exit", "type", "echo"]);
+  const builtins = new Set(["exit", "type", "echo", "pwd"]);
   let found = false;
-  
+
   if (args.length < 2) {
     console.error("type: missing argument");
     return;
   }
-  
+
   const cmd = args[1];
   if (builtins.has(cmd)) {
     console.log(`${cmd} is a shell builtin`);
@@ -58,7 +62,7 @@ function handleType(args) {
       found = true;
     }
   }
-  
+
   if (!found) {
     console.log(`${cmd}: not found`);
   }
@@ -78,13 +82,16 @@ function prompt() {
 
       switch (command) {
         case "exit":
-          exit_(Number(args[1]));
+          terminateShell(Number(args[1]));
           break;
         case "type":
           handleType(args);
           break;
         case "echo":
           console.log(restOfInput);
+          break;
+        case "pwd":
+          console.log(printWorkDir());
           break;
         default: {
           const exists = findExternalProgram(command)[0];
@@ -93,7 +100,10 @@ function prompt() {
               stdio: "inherit",
             });
             if (result.error) {
-              console.error(`Error executing ${command}:`, result.error.message);
+              console.error(
+                `Error executing ${command}:`,
+                result.error.message
+              );
             }
           } else {
             console.error(`${command}: command not found`);
