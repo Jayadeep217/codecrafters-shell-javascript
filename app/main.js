@@ -24,17 +24,17 @@ function findExternalProgram(command) {
       const destPath = path.resolve(pathEnv, command);
       try {
         if (fs.statSync(destPath).isFile()) {
-          return [true, destPath];
+          return true;
         }
       } catch (err) {
         // Continue searching if file not found in this path
         continue;
       }
     }
-    return [false, null];
+    return false;
   } catch (err) {
     console.error("Error while finding external program:", err.message);
-    return [false, null];
+    return false;
   }
 }
 
@@ -52,7 +52,7 @@ function handleType(args) {
     console.log(`${cmd} is a shell builtin`);
     found = true;
   } else {
-    const [exists, destPath] = findExternalProgram(cmd);
+    const exists = findExternalProgram(cmd);
     if (exists) {
       console.log(`${cmd} is ${destPath}`);
       found = true;
@@ -87,9 +87,9 @@ function prompt() {
           console.log(restOfInput);
           break;
         default: {
-          const [exists, programPath] = findExternalProgram(command);
+          const exists = findExternalProgram(command);
           if (exists) {
-            const result = spawnSync(programPath, args.slice(1), {
+            const result = spawnSync(command, args.slice(1), {
               stdio: "inherit",
             });
             if (result.error) {
