@@ -1,7 +1,7 @@
 const readline = require("readline");
-const { exit } = require("process");
 const fs = require("fs");
 const path = require("path");
+const { spawnSync } = require("child_process");
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -9,40 +9,64 @@ const rl = readline.createInterface({
 });
 
 function exit_(exitCode) {
-  if (isNaN(exitCode) || exitCode < 0 || exitCode || 0) {
+  if (exitCode !== 0) {
     console.error("Invalid exit code");
     return;
   }
   rl.close();
-  process.exit(exitCode);
+  process.exit(exitCode || 0);
 }
 
-function handleType(args){
+function findExternalProgram(command) {
+  try {
+    const paths = process.env.PATH.split(path.delimiter);
+    for (const pathEnv of paths) {
+      const destPath = path.resolve(pathEnv, command);
+      try {
+        if (fs.statSync(destPath).isFile()) {
+          return [true, destPath];
+        }
+      } catch (err) {
+        // Continue searching if file not found in this path
+        continue;
+      }
+    }
+    return [false, null];
+  } catch (err) {
+    console.error("Error while finding external program:", err.message);
+    return [false, null];
+  }
+}
+
+function handleType(args) {
   const builtins = new Set(["exit", "type", "echo"]);
   let found = false;
+  
+  if (args.length < 2) {
+    console.error("type: missing argument");
+    return;
+  }
+  
   const cmd = args[1];
   if (builtins.has(cmd)) {
     console.log(`${cmd} is a shell builtin`);
     found = true;
   } else {
-    const paths = process.env.PATH.split(path.delimiter);
-    for (const pathEnv of paths) {
-      let destPath = path.join(pathEnv, cmd);
-      if (fs.existsSync(destPath) && fs.statSync(destPath).isFile()) {
-        console.log(`${cmd} is ${destPath}`);
-        found = true;
-      }
+    const [exists, destPath] = findExternalProgram(cmd);
+    if (exists) {
+      console.log(`${cmd} is ${destPath}`);
+      found = true;
     }
-    if (!found) {
-      console.log(`${restOfInput}: not found`);
-    }
+  }
+  
+  if (!found) {
+    console.log(`${cmd}: not found`);
   }
 }
 
 function prompt() {
   rl.question("$ ", (input) => {
     try {
-
       if (!input.trim()) {
         prompt();
         return;
@@ -62,14 +86,23 @@ function prompt() {
         case "echo":
           console.log(restOfInput);
           break;
-          
-          default:
+        default: {
+          const [exists, programPath] = findExternalProgram(command);
+          if (exists) {
+            const result = spawnSync(programPath, args.slice(1), {
+              stdio: "inherit",
+            });
+            if (result.error) {
+              console.error(`Error executing ${command}:`, result.error.message);
+            }
+          } else {
             console.error(`${command}: command not found`);
+          }
+        }
       }
     } catch (err) {
       console.error("An error occurred:", err.message);
     }
-
     prompt();
   });
 }
