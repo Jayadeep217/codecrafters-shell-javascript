@@ -111,7 +111,7 @@ function prompt() {
           console.log(printWorkDir());
           break;
         case "cd":
-          console.log(changeDir(args));
+          changeDir(args);
           break;
         default: {
           const exists = findExternalProgram(command)[0];
