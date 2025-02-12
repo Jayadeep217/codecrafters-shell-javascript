@@ -2,6 +2,7 @@ const readline = require("readline");
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
+const { Console } = require("console");
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -19,6 +20,23 @@ function terminateShell(exitCode) {
 
 function printWorkDir() {
   return process.cwd();
+}
+
+// function customChDir(dirpath){
+//   validatePath
+// }
+
+function changeDir(args) {
+  const newDir = args[1];
+  try {
+    process.customChDir(newDir);
+  } catch (err) {
+    if (err.code === "ENOENT") {
+      console.error(`cd: no such file or directory: ${args[1]}`);
+    } else {
+      console.error(`cd: ${err.message}`);
+    }
+  }
 }
 
 function findExternalProgram(command) {
@@ -43,7 +61,7 @@ function findExternalProgram(command) {
 }
 
 function handleType(args) {
-  const builtins = new Set(["exit", "type", "echo", "pwd"]);
+  const builtins = new Set(["exit", "type", "echo", "pwd", "cd"]);
   let found = false;
 
   if (args.length < 2) {
@@ -78,7 +96,6 @@ function prompt() {
 
       const args = input.trim().split(/\s+/);
       const command = args[0];
-      const restOfInput = args.slice(1).join(" ");
 
       switch (command) {
         case "exit":
@@ -88,10 +105,13 @@ function prompt() {
           handleType(args);
           break;
         case "echo":
-          console.log(restOfInput);
+          console.log(args.slice(1).join(" ").trim());
           break;
         case "pwd":
           console.log(printWorkDir());
+          break;
+        case "cd":
+          console.log(changeDir(args));
           break;
         default: {
           const exists = findExternalProgram(command)[0];
