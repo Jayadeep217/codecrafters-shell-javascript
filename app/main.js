@@ -29,7 +29,7 @@ function printWorkDir() {
 function changeDir(args) {
   const newDir = args[1];
   try {
-    process.customChDir(newDir);
+    process.chdir(newDir);
   } catch (err) {
     if (err.code === "ENOENT") {
       console.error(`cd: no such file or directory: ${args[1]}`);
