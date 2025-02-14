@@ -117,7 +117,7 @@ function prompt() {
         default: {
           const [exists, destPath] = findExternalProgram(command);
           if (exists) {
-            const result = spawnSync(destPath, args.slice(1), {
+            const result = spawnSync(command, args.slice(1), {
               stdio: "inherit",
             });
             if (result.error) {
