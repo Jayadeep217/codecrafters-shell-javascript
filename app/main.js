@@ -21,10 +21,6 @@ function printWorkDir() {
   return process.cwd();
 }
 
-// function customChDir(dirpath){
-//   validatePath
-// }
-
 function changeDir(args) {
   const newDir = args[1] || process.env.HOME || process.env.USERPROFILE;
 
