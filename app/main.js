@@ -22,7 +22,7 @@ function printWorkDir() {
 }
 
 function changeDir(args) {
-  const newDir = args[1] || process.env.HOME || process.env.USERPROFILE;
+  const newDir = args[1] === '~' ? process.env.HOME || process.env.USERPROFILE : args[1];
 
   if (!fs.existsSync(newDir)) {
     console.error(`cd: no such file or directory: ${newDir}`);
