@@ -97,6 +97,7 @@ function prompt() {
 
       const args = input.trim().split(/\s+/);
       const command = args[0];
+      input = input.replace(command+" ", "");
 
       switch (command) {
         case "exit":
@@ -106,7 +107,7 @@ function prompt() {
           handleType(args);
           break;
         case "echo":
-          console.log(args.slice(1).join(" ").trim());
+          console.log(input.replace(/'/g,""));
           break;
         case "pwd":
           console.log(printWorkDir());
@@ -117,7 +118,7 @@ function prompt() {
         default: {
           const [exists, destPath] = findExternalProgram(command);
           if (exists) {
-            const result = spawnSync(command, args.slice(1), {
+            const result = spawnSync(command, input.split(" "), {
               stdio: "inherit",
             });
             if (result.error) {
