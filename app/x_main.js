@@ -22,7 +22,7 @@ function printWorkDir() {
 }
 
 function changeDir(args) {
-  const newDir = args[1] === '~' ? process.env.HOME || process.env.USERPROFILE : args[1];
+  const newDir = args[1] || process.env.HOME || process.env.USERPROFILE;
 
   if (!fs.existsSync(newDir)) {
     console.error(`cd: no such file or directory: ${newDir}`);
@@ -32,26 +32,21 @@ function changeDir(args) {
   try {
     process.chdir(newDir);
   } catch (err) {
-    if (err.code === "ENOENT") {
-      console.error(`cd: no such file or directory: ${args[1]}`);
-    } else {
-      console.error(`cd: ${err.message}`);
-    }
+    console.error(`cd: ${err.message}`);
   }
 }
 
 function findExternalProgram(command) {
   try {
     const paths = process.env.PATH.split(path.delimiter);
+    const extensions = process.platform === "win32" ? [".exe", ".bat", ".cmd"] : [""];
+
     for (const pathEnv of paths) {
-      const destPath = path.resolve(pathEnv, command);
-      try {
-        if (fs.statSync(destPath).isFile()) {
+      for (const ext of extensions) {
+        const destPath = path.resolve(pathEnv, command + ext);
+        if (fs.existsSync(destPath) && fs.statSync(destPath).isFile()) {
           return [true, destPath];
         }
-      } catch (err) {
-        // Continue searching if file not found in this path
-        continue;
       }
     }
     return [false, null];
@@ -63,7 +58,6 @@ function findExternalProgram(command) {
 
 function handleType(args) {
   const builtins = new Set(["exit", "type", "echo", "pwd", "cd"]);
-  let found = false;
 
   if (args.length < 2) {
     console.error("type: missing argument");
@@ -73,17 +67,13 @@ function handleType(args) {
   const cmd = args[1];
   if (builtins.has(cmd)) {
     console.log(`${cmd} is a shell builtin`);
-    found = true;
   } else {
     const [exists, destPath] = findExternalProgram(cmd);
     if (exists) {
       console.log(`${cmd} is ${destPath}`);
-      found = true;
+    } else {
+      console.log(`${cmd}: not found`);
     }
-  }
-
-  if (!found) {
-    console.log(`${cmd}: not found`);
   }
 }
 
@@ -117,7 +107,7 @@ function prompt() {
         default: {
           const [exists, destPath] = findExternalProgram(command);
           if (exists) {
-            const result = spawnSync(command, args.slice(1), {
+            const result = spawnSync(destPath, args.slice(1), {
               stdio: "inherit",
             });
             if (result.error) {
