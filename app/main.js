@@ -22,8 +22,7 @@ function printWorkDir() {
 }
 
 function changeDir(args) {
-  const newDir =
-    args[1] === "~" ? process.env.HOME || process.env.USERPROFILE : args[1];
+  const newDir = args[1] === '~' ? process.env.HOME || process.env.USERPROFILE : args[1];
 
   if (!fs.existsSync(newDir)) {
     console.error(`cd: no such file or directory: ${newDir}`);
@@ -98,7 +97,7 @@ function prompt() {
 
       const args = input.trim().split(/\s+/);
       const command = args[0];
-      input = input.replace(command + " ", "");
+      input = input.replace(command+" ", "");
 
       switch (command) {
         case "exit":
@@ -108,7 +107,7 @@ function prompt() {
           handleType(args);
           break;
         case "echo":
-          console.log(input.substring(command.length).trim().replace(/'/g, ""));
+          console.log(input.replace(/'/g,""));
           break;
         case "pwd":
           console.log(printWorkDir());
@@ -119,14 +118,11 @@ function prompt() {
         default: {
           const [exists, destPath] = findExternalProgram(command);
           if (exists) {
-            const result = spawnSync(command, args.slice(1), {
+            const result = spawnSync(command, input.split(" "), {
               stdio: "inherit",
             });
             if (result.error) {
-              console.error(
-                `Error executing ${command}:`,
-                result.error.message
-              );
+              console.error(`Error executing ${command}:`, result.error.message);
             }
           } else {
             console.error(`${command}: command not found`);
